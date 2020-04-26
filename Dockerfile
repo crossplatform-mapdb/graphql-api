@@ -11,5 +11,5 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 COPY --from=builder /go/bin/go-graphql-api /app
 ENTRYPOINT ./app
-LABEL Name=go-graphql-api Version=0.0.1
+LABEL Name=go-api Version=0.0.1
 EXPOSE 8080
