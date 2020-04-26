@@ -1,7 +1,11 @@
 package main
 
 import (
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-pg/pg/v9"
+	"github.com/rs/cors"
+	customMiddleware "github.com/zackartz/go-graphql-api/middleware"
 	"github.com/zackartz/go-graphql-api/postgres"
 	"log"
 	"net/http"
@@ -31,14 +35,27 @@ func main() {
 		port = defaultPort
 	}
 
+	userRepo := postgres.UsersRepo{DB: DB}
+
+	router := chi.NewRouter()
+
+	router.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:8080"},
+		AllowCredentials: true,
+		Debug:            true,
+	}).Handler)
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Logger)
+	router.Use(customMiddleware.AuthMiddleware(userRepo))
+
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graphql.Resolver{
 		PlacesRepo: postgres.PlacesRepo{DB: DB},
-		UsersRepo:  postgres.UsersRepo{DB: DB},
+		UsersRepo:  userRepo,
 	}}))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	router.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }

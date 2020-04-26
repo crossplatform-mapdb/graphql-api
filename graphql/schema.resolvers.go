@@ -7,13 +7,99 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zackartz/go-graphql-api/middleware"
+	"log"
 
 	"github.com/zackartz/go-graphql-api/graphql/generated"
-	"github.com/zackartz/go-graphql-api/graphql/model"
 	"github.com/zackartz/go-graphql-api/models"
 )
 
-func (r *mutationResolver) CreatePlace(ctx context.Context, input model.NewPlace) (*models.Place, error) {
+var (
+	ErrBadCredentials  = errors.New("email/password combination didn't work")
+	ErrUnauthenticated = errors.New("unauthenticated")
+)
+
+func (r *mutationResolver) Register(ctx context.Context, input *models.RegisterInput) (*models.AuthResponse, error) {
+	_, err := r.UsersRepo.GetUserByEmail(input.Email)
+	if err == nil {
+		return nil, errors.New("email already in use")
+	}
+
+	_, err = r.UsersRepo.GetUserByUsername(input.Username)
+	if err == nil {
+		return nil, errors.New("username already taken")
+	}
+
+	user := &models.User{
+		Username:  input.Username,
+		Email:     input.Email,
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+	}
+
+	err = user.HashPassword(input.Password)
+	if err != nil {
+		log.Printf("error while hashing password: %v", err)
+		return nil, errors.New("something went wrong")
+	}
+	// TODO: send verification code
+
+	tx, err := r.UsersRepo.DB.Begin()
+	if err != nil {
+		log.Printf("error creating a transaction: %v", err)
+		return nil, errors.New("something went wrong")
+	}
+	defer tx.Rollback()
+	if _, err := r.UsersRepo.CreateUser(tx, user); err != nil {
+		log.Printf("error creating a transaction: %v", err)
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("error while committing: %v", err)
+		return nil, err
+	}
+
+	token, err := user.GenToken()
+	if err != nil {
+		log.Printf("error while generating the token: %v", err)
+		return nil, errors.New("something went wrong")
+	}
+
+	return &models.AuthResponse{
+		AuthToken: token,
+		User:      user,
+	}, nil
+}
+
+func (r *mutationResolver) Login(ctx context.Context, input *models.LoginInput) (*models.AuthResponse, error) {
+	user, err := r.UsersRepo.GetUserByEmail(input.Email)
+	if err != nil {
+		return nil, ErrBadCredentials
+	}
+
+	err = user.ComparePassword(input.Password)
+	if err != nil {
+		return nil, ErrBadCredentials
+	}
+
+	token, err := user.GenToken()
+	if err != nil {
+		return nil, ErrBadCredentials
+	}
+
+	return &models.AuthResponse{
+		AuthToken: token,
+		User:      user,
+	}, nil
+}
+
+func (r *mutationResolver) CreatePlace(ctx context.Context, input models.NewPlace) (*models.Place, error) {
+	currentUser, err := middleware.GetCurrentUserFromCTX(ctx)
+	if err != nil {
+		return nil, ErrUnauthenticated
+	}
+
 	if len(input.Name) < 3 {
 		return nil, errors.New("name not long enough")
 	}
@@ -25,13 +111,13 @@ func (r *mutationResolver) CreatePlace(ctx context.Context, input model.NewPlace
 	place := &models.Place{
 		Name:        input.Name,
 		Description: input.Desc,
-		UserID:      "1",
+		UserID:      currentUser.ID,
 	}
 
 	return r.PlacesRepo.CreatePlace(place)
 }
 
-func (r *mutationResolver) UpdatePlace(ctx context.Context, id string, input model.UpdatePlace) (*models.Place, error) {
+func (r *mutationResolver) UpdatePlace(ctx context.Context, id string, input models.UpdatePlace) (*models.Place, error) {
 	place, err := r.PlacesRepo.GetById(id)
 	if err != nil || place == nil {
 		return nil, errors.New("place does not exist")
@@ -84,8 +170,8 @@ func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	return r.UsersRepo.GetUsers()
 }
 
-func (r *queryResolver) Places(ctx context.Context) ([]*models.Place, error) {
-	return r.PlacesRepo.GetPlaces()
+func (r *queryResolver) Places(ctx context.Context, filter *models.PlaceFilter, limit *int, offset *int) ([]*models.Place, error) {
+	return r.PlacesRepo.GetPlaces(filter, limit, offset)
 }
 
 func (r *queryResolver) User(ctx context.Context, id string) (*models.User, error) {

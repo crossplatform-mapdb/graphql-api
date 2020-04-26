@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"fmt"
 	"github.com/go-pg/pg/v9"
 	"github.com/zackartz/go-graphql-api/models"
 )
@@ -9,9 +10,26 @@ type PlacesRepo struct {
 	DB *pg.DB
 }
 
-func (p *PlacesRepo) GetPlaces() ([]*models.Place, error) {
+func (p *PlacesRepo) GetPlaces(filter *models.PlaceFilter, limit, offset *int) ([]*models.Place, error) {
 	var places []*models.Place
-	err := p.DB.Model(&places).Order("id").Select()
+
+	query := p.DB.Model(&places).Order("id")
+
+	if filter != nil {
+		if filter.Name != nil && *filter.Name != "" {
+			query.Where("name ILIKE ?", fmt.Sprintf("%%%s%%", *filter.Name))
+		}
+	}
+
+	if limit != nil {
+		query.Limit(*limit)
+	}
+
+	if offset != nil {
+		query.Offset(*offset)
+	}
+
+	err := query.Select()
 	if err != nil {
 		return nil, err
 	}

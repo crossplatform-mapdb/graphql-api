@@ -1,12 +1,24 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
+scalar Time
+
+type AuthToken {
+  accessToken: String!
+  expiredAt: Time!
+}
+
+type AuthResponse {
+  authToken: AuthToken!
+  user: User!
+}
 
 type User {
   id: ID!
   username: String!
   email: String!
+  firstName: String!
+  lastName: String!
   places: [Place!]!
+  createdAt: Time!
+  updatedAt: Time!
 }
 
 type Place {
@@ -14,6 +26,20 @@ type Place {
   name: String!
   description: String!
   user_id: String!
+}
+
+input RegisterInput {
+  username: String!
+  email: String!
+  password: String!
+  confirmPassword: String!
+  firstName: String!
+  lastName: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
 }
 
 input NewPlace {
@@ -26,13 +52,19 @@ input UpdatePlace {
   description: String
 }
 
+input PlaceFilter {
+  name: String
+}
+
 type Query {
   users: [User!]!
-  places: [Place!]!
+  places(filter: PlaceFilter, limit: Int = 10, offset: Int = 0): [Place!]!
   user(id: ID!): User!
 }
 
 type Mutation {
+  register(input: RegisterInput): AuthResponse!
+  login(input: LoginInput): AuthResponse!
   createPlace(input: NewPlace!): Place!
   updatePlace(id: ID!, input: UpdatePlace!): Place!
   deletePlace(id: ID!): Boolean!

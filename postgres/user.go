@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"fmt"
 	"github.com/go-pg/pg/v9"
 	"github.com/zackartz/go-graphql-api/models"
 )
@@ -9,14 +10,14 @@ type UsersRepo struct {
 	DB *pg.DB
 }
 
-func (u *UsersRepo) GetUserById(id string) (*models.User, error) {
+func (u *UsersRepo) GetUserByField(field, value string) (*models.User, error) {
 	var user models.User
-	err := u.DB.Model(&user).Where("id = ?", id).First()
-	if err != nil {
-		return nil, err
-	}
+	err := u.DB.Model(&user).Where(fmt.Sprintf("%v = ?", field), value).First()
+	return &user, err
+}
 
-	return &user, nil
+func (u *UsersRepo) GetUserById(id string) (*models.User, error) {
+	return u.GetUserByField("id", id)
 }
 
 func (u *UsersRepo) GetUsers() ([]*models.User, error) {
@@ -27,4 +28,17 @@ func (u *UsersRepo) GetUsers() ([]*models.User, error) {
 	}
 
 	return users, nil
+}
+
+func (u *UsersRepo) GetUserByEmail(email string) (*models.User, error) {
+	return u.GetUserByField("email", email)
+}
+
+func (u *UsersRepo) GetUserByUsername(username string) (*models.User, error) {
+	return u.GetUserByField("username", username)
+}
+
+func (u *UsersRepo) CreateUser(tx *pg.Tx, user *models.User) (*models.User, error) {
+	_, err := tx.Model(user).Returning("*").Insert()
+	return user, err
 }
