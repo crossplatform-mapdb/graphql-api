@@ -66,7 +66,7 @@ var authExtractor = &request.MultiExtractor{
 
 func parseToken(r *http.Request) (*jwt.Token, error) {
 	jwtToken, err := request.ParseFromRequest(r, authExtractor, func(token *jwt.Token) (interface{}, error) {
-		t := []byte(os.Getenv("token-secret"))
+		t := []byte(os.Getenv("SECRET"))
 		return t, nil
 	})
 

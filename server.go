@@ -21,9 +21,10 @@ const defaultPort = "8080"
 
 func main() {
 	DB := postgres.New(&pg.Options{
-		User:     "postgres",
-		Password: "postgres",
-		Database: "pog_dev",
+		Addr:     os.Getenv("URL"),
+		User:     os.Getenv("USER"),
+		Password: os.Getenv("PASS"),
+		Database: os.Getenv("DB"),
 	})
 
 	defer DB.Close()
@@ -40,7 +41,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:8080"},
+		//AllowedOrigins:   []string{"http://localhost:8080", "https://api.zacharymyers.com"},
 		AllowCredentials: true,
 		Debug:            true,
 	}).Handler)
