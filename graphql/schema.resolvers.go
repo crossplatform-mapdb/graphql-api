@@ -7,11 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/zackartz/go-graphql-api/middleware"
+	"github.com/crossplatform-mapdb/graphql-api/middleware"
 	"log"
 
-	"github.com/zackartz/go-graphql-api/graphql/generated"
-	"github.com/zackartz/go-graphql-api/models"
+	"github.com/crossplatform-mapdb/graphql-api/graphql/generated"
+	"github.com/crossplatform-mapdb/graphql-api/models"
 )
 
 var (

@@ -3,11 +3,11 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"github.com/crossplatform-mapdb/graphql-api/models"
+	"github.com/crossplatform-mapdb/graphql-api/postgres"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
 	"github.com/pkg/errors"
-	"github.com/zackartz/go-graphql-api/models"
-	"github.com/zackartz/go-graphql-api/postgres"
 	"net/http"
 	"os"
 	"strings"

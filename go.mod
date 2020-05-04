@@ -1,4 +1,4 @@
-module github.com/zackartz/go-graphql-api
+module github.com/crossplatform-mapdb/graphql-api
 
 go 1.13
 

@@ -1,20 +1,20 @@
 package main
 
 import (
+	"github.com/crossplatform-mapdb/graphql-api/graphql/generated"
+	customMiddleware "github.com/crossplatform-mapdb/graphql-api/middleware"
+	"github.com/crossplatform-mapdb/graphql-api/postgres"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-pg/pg/v9"
 	"github.com/rs/cors"
-	customMiddleware "github.com/zackartz/go-graphql-api/middleware"
-	"github.com/zackartz/go-graphql-api/postgres"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/zackartz/go-graphql-api/graphql"
-	"github.com/zackartz/go-graphql-api/graphql/generated"
+	"github.com/crossplatform-mapdb/graphql-api/graphql"
 )
 
 const defaultPort = "8080"

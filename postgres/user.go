@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"fmt"
+	"github.com/crossplatform-mapdb/graphql-api/models"
 	"github.com/go-pg/pg/v9"
-	"github.com/zackartz/go-graphql-api/models"
 )
 
 type UsersRepo struct {

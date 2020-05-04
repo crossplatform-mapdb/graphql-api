@@ -2,7 +2,9 @@
 
 package graphql
 
-import "github.com/zackartz/go-graphql-api/postgres"
+import (
+	"github.com/crossplatform-mapdb/graphql-api/postgres"
+)
 
 // This file will not be regenerated automatically.
 //
